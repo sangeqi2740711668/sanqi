@@ -391,6 +391,10 @@
                     if (!trueUrl.includes("http")) {
                         trueUrl = "https://" + trueUrl;
                     }
+
+                    if (window.location.protocol === 'https:' && trueUrl.startsWith('http://')) {
+                        trueUrl = trueUrl.replace('http://', 'https://');
+                    }
                     
                     // 检查域名是否在白名单
                     if (!isAllowedDomain(trueUrl)) {
