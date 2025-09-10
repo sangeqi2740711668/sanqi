@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>安全跳转页面</title>
+    <style>
+        /* 三点加载动画样式 */
+        .container {
+            width: 100px;
+            height: 100px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: rotate-move 2s ease-in-out infinite;
+            display: none;
+        }
+
+        .dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin: auto;
+        }
+
+        .dot-3 {
+            background-color: #f74d75;
+            animation: dot-3-move 2s ease infinite;
+        }
+
+        .dot-2 {
+            background-color: #10beae;
+            animation: dot-2-move 2s ease infinite;
+        }
+
+        .dot-1 {
+            background-color: #ffe386;
+            animation: dot-1-move 2s ease infinite;
+        }
+
+        @keyframes dot-3-move {
+
+            20%,
+            100% {
+                transform: scale(1)
+            }
+
+            45%,
+            80% {
+                transform: translateY(-18px) scale(.45)
+            }
+        }
+
+        @keyframes dot-2-move {
+
+            20%,
+            100% {
+                transform: scale(1)
+            }
+
+            45%,
+            80% {
+                transform: translate(-16px, 12px) scale(.45)
+            }
+        }
+
+        @keyframes dot-1-move {
+
+            20%,
+            100% {
+                transform: scale(1)
+            }
+
+            45%,
+            80% {
+                transform: translate(16px, 12px) scale(.45)
+            }
+        }
+
+        @keyframes rotate-move {
+            55% {
+                transform: translate(-50%, -50%) rotate(0deg)
+            }
+
+            80%,
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg)
+            }
+        }
+
+        /* 授权提示页面样式 - shadcn UI风格 */
+        .auth-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: hsl(0 0% 3.9%);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        .auth-card {
+            background: hsl(0 0% 9%);
+            border: 1px solid hsl(0 0% 14.9%);
+            border-radius: 8px;
+            padding: 48px;
+            text-align: center;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            max-width: 420px;
+            width: 90%;
+        }
+
+        .auth-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 24px;
+            background: hsl(0 0% 14.9%);
+            border: 1px solid hsl(0 0% 20%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: hsl(0 0% 63.9%);
+        }
+
+        .auth-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: hsl(0 0% 98%);
+            margin-bottom: 8px;
+            letter-spacing: -0.025em;
+        }
+
+        .auth-subtitle {
+            font-size: 14px;
+            color: hsl(0 0% 63.9%);
+            margin-bottom: 32px;
+            line-height: 1.5;
+        }
+
+        .auth-message {
+            font-size: 14px;
+            color: hsl(0 0% 63.9%);
+            line-height: 1.5;
+            margin-bottom: 32px;
+            padding: 16px;
+            background: hsl(0 0% 14.9%);
+            border: 1px solid hsl(0 0% 20%);
+            border-radius: 6px;
+            border-left: 4px solid hsl(0 0% 63.9%);
+        }
+
+        .auth-contact {
+            background: hsl(0 0% 98%);
+            color: hsl(0 0% 9%);
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            min-height: 20px;
+            line-height: 1.4;
+            margin: 0;
+        }
+
+        .auth-contact:hover {
+            background: hsl(0 0% 90%);
+            color: hsl(0 0% 9%);
+            text-decoration: none;
+        }
+
+        .auth-contact:active {
+            background: hsl(0 0% 85%);
+        }
+
+        .auth-contact.copied {
+            background: hsl(142.1 76.2% 36.3%);
+            color: hsl(355.7 100% 97.3%);
+        }
+
+        .auth-contact.copied:hover {
+            background: hsl(142.1 76.2% 32%);
+        }
+
+        .wechat-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin: 24px 0;
+            flex-wrap: wrap;
+        }
+
+        .wechat-id {
+            font-family: 'Courier New', monospace;
+            background: hsl(0 0% 14.9%);
+            color: hsl(0 0% 98%);
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            border: 1px solid hsl(0 0% 20%);
+            margin: 0;
+            display: inline-block;
+            letter-spacing: 0.5px;
+            min-height: 20px;
+            line-height: 1.4;
+        }
+
+        /* iframe样式 */
+        .content {
+            height: 100%;
+            width: 100%;
+            position: fixed;
+            inset: -2px;
+            z-index: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 三点加载动画容器 -->
+    <div class="container" id="loadingContainer">
+        <div class="dot dot-1"></div>
+        <div class="dot dot-2"></div>
+        <div class="dot dot-3"></div>
+    </div>
+
+    <!-- 授权提示页面 -->
+    <div class="auth-container" id="authContainer">
+        <div class="auth-card">
+            <div class="auth-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                    <circle cx="12" cy="16" r="1"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+            </div>
+            <div class="auth-title">访问受限</div>
+            <div class="auth-subtitle">此内容需要授权后才能访问</div>
+            <div class="auth-message">
+                该域名不在授权白名单中，请联系管理员进行授权申请。
+            </div>
+            <div class="wechat-section">
+                <div class="wechat-id">SQ-777-1</div>
+                <button class="auth-contact" onclick="copyWechat()" id="copyButton">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+                        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+                    </svg>
+                    复制微信号
+                    </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            // 白名单域名配置（预留位置方便后期添加）
+            const WHITELIST_CONFIG = {
+                domains: [
+                    'phfd1.heijuju.cn'
+                ]
+            };
+
+            // 显示三点加载动画
+            function showLoadingAnimation() {
+                document.getElementById('loadingContainer').style.display = 'block';
+            }
+
+            // 显示授权页面
+            function showAuthPage() {
+                document.getElementById('authContainer').style.display = 'flex';
+            }
+
+            // 复制微信号功能
+            function copyWechat() {
+                const wechatId = 'SQ-777-1';
+                
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(wechatId).then(() => {
+                        showCopySuccess();
+                    }).catch(() => {
+                        fallbackCopy(wechatId);
+                    });
+                } else {
+                    fallbackCopy(wechatId);
+                }
+            }
+
+            // 备用复制方法
+            function fallbackCopy(text) {
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.opacity = '0';
+                document.body.appendChild(textArea);
+                textArea.select();
+                
+                try {
+                    document.execCommand('copy');
+                    showCopySuccess();
+                } catch (err) {
+                    alert('微信号：' + text);
+                }
+                
+                document.body.removeChild(textArea);
+            }
+
+            // 显示复制成功提示
+            function showCopySuccess() {
+                const button = document.getElementById('copyButton');
+                const originalHTML = button.innerHTML;
+                
+                button.className = 'auth-contact copied';
+                button.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20,6 9,17 4,12"/>
+                    </svg>
+                    已复制到剪贴板
+                `;
+                
+                setTimeout(() => {
+                    button.className = 'auth-contact';
+                    button.innerHTML = originalHTML;
+                }, 2000);
+            }
+
+            // 检测是否在微信环境
+            function isWechat() {
+                const ua = navigator.userAgent.toLowerCase();
+                return ua.includes('micromessenger');
+            }
+
+            // 验证URL域名是否在白名单
+            function isAllowedDomain(url) {
+                try {
+                    const domain = new URL(url).hostname.replace('www.', '');
+                    console.log('检查域名:', domain);
+                    console.log('白名单配置:', WHITELIST_CONFIG.domains);
+                    
+                    const isAllowed = WHITELIST_CONFIG.domains.some(allowedDomain => {
+                        const exactMatch = domain === allowedDomain;
+                        const subdomainMatch = domain.endsWith('.' + allowedDomain);
+                        console.log(`匹配检查 - 域名: ${domain}, 白名单: ${allowedDomain}, 精确匹配: ${exactMatch}, 子域名匹配: ${subdomainMatch}`);
+                        return exactMatch || subdomainMatch;
+                    });
+                    
+                    console.log('最终匹配结果:', isAllowed);
+                    return isAllowed;
+                } catch (e) {
+                    console.error('URL解析失败:', e);
+                    return false;
+                }
+            }
+
+            // 主处理逻辑
+            function processRedirect() {
+                showLoadingAnimation();
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const encodedParam = urlParams.get('c');
+
+                if (!encodedParam) {
+                    showAuthPage();
+                    document.getElementById('loadingContainer').style.display = 'none';
+                    return;
+                }
+
+                try {
+                    let trueUrl = atob(encodedParam);
+                    
+                    // 如果URL没有协议前缀，自动添加https://
+                    if (!trueUrl.includes("http")) {
+                        trueUrl = "https://" + trueUrl;
+                    }
+
+                    if (window.location.protocol === 'https:' && trueUrl.startsWith('http://')) {
+                        trueUrl = trueUrl.replace('http://', 'https://');
+                    }
+                    
+                    // 检查域名是否在白名单
+                    // if (!isAllowedDomain(trueUrl)) {
+                    //     showAuthPage();
+                    //     return;
+                    // }
+
+                    // 创建并加载iframe
+                    const iframe = document.createElement('iframe');
+                    iframe.className = 'content';
+                    iframe.src = trueUrl;
+
+                    iframe.addEventListener('load', function () {
+                        document.getElementById('loadingContainer').style.display = 'none';
+                    });
+
+                    // 微信环境下监听支付跳转
+                    if (isWechat()) {
+                        // 监听iframe的load事件，检测URL变化
+                        let lastUrl = trueUrl;
+                        const checkPaymentRedirect = () => {
+                            try {
+                                // 尝试获取iframe的当前URL
+                                const currentUrl = iframe.contentWindow.location.href;
+                                if (currentUrl !== lastUrl) {
+                                    lastUrl = currentUrl;
+                                    // 检测是否是支付相关的跳转
+                                    if (currentUrl.includes('submit.php') || 
+                                        currentUrl.includes('pay.jry0.com') || 
+                                        currentUrl.includes('/pay/') ||
+                                        currentUrl.includes('payment') ||
+                                        currentUrl.includes('wxpay') ||
+                                        currentUrl.includes('alipay')) {
+                                        // 直接跳转到支付页面
+                                        window.location.href = currentUrl;
+                                        return;
+                                    }
+                                }
+                            } catch (e) {
+                                // 跨域限制，使用其他方法检测
+                                // 监听iframe的src属性变化
+                                if (iframe.src !== lastUrl && 
+                                    (iframe.src.includes('submit.php') || 
+                                     iframe.src.includes('pay.jry0.com') ||
+                                     iframe.src.includes('wxpay') ||
+                                     iframe.src.includes('alipay'))) {
+                                    window.location.href = iframe.src;
+                                    return;
+                                }
+                            }
+                            // 继续检测
+                            setTimeout(checkPaymentRedirect, 500);
+                        };
+                        
+                        // 开始检测
+                        setTimeout(checkPaymentRedirect, 1000);
+                    }
+
+                    document.body.appendChild(iframe);
+                    
+                } catch (e) {
+                    console.error('URL解码失败:', e);
+                    showAuthPage();
+                    document.getElementById('loadingContainer').style.display = 'none';
+                }
+            }
+
+            // 禁止F12开发者工具
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'F12' ||
+                    (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+                    (e.ctrlKey && e.shiftKey && e.key === 'J') ||
+                    (e.ctrlKey && e.key === 'U')) {
+                    e.preventDefault();
+                }
+            });
+
+            processRedirect();
+
+            // 将函数暴露到全局作用域
+            window.copyWechat = copyWechat;
+        })();
+    </script>
+</body>
+
+</html>
